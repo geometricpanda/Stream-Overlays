@@ -187,7 +187,7 @@ const Wordle = forwardRef<WordleRef, WordleProps>(({words}, ref) => {
   }, [doNewGame, doHint, doForfeit])
 
   const onChat: OnChatHandler = useCallback((user, message) => {
-    doGuess(message, user);
+    doGuess(message.toLowerCase(), user);
   }, [doGuess])
 
   useImperativeHandle(ref, () => ({
