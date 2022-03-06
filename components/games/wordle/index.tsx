@@ -2,6 +2,7 @@ import classNames from 'classnames';
 import {forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState} from 'react';
 import styles from './index.module.css';
 import {OnChatHandler, OnCommandHandler} from 'comfy.js';
+import {useAudio} from 'react-use';
 
 enum GAME_STATE {
   LOAD,
@@ -80,6 +81,10 @@ const Play = ({gameboard, word}: { gameboard: Grid, word: string }) => {
 
 const Wordle = forwardRef<WordleRef, WordleProps>(({words}, ref) => {
 
+  const [winAudio, _, winControls] = useAudio({src: '/wordle/win.mp3', autoPlay: false});
+  const [startAudio, __, startControls] = useAudio({src: '/wordle/start.mp3', autoPlay: false});
+  const [guessAudio, ___, guessControls] = useAudio({src: '/wordle/guess.mp3', autoPlay: false});
+
   const [gameState, setGameState] = useState<GAME_STATE>(GAME_STATE.LOAD);
   const [gameBoard, setGameBoard] = useState<Grid>([]);
   const [word, setWord] = useState<string>('tropes');
@@ -88,14 +93,12 @@ const Wordle = forwardRef<WordleRef, WordleProps>(({words}, ref) => {
   const doLoading = useCallback(() => {
     setGameState(GAME_STATE.LOAD);
   }, []);
-  //
-  // const doWin = useCallback(() => {
-  //   setGameState(GAME_STATE.WIN);
-  // }, []);
-  //
-  // const doLose = useCallback(() => {
-  //   setGameState(GAME_STATE.LOSE);
-  // }, []);
+
+  const doWin = useCallback((player) => {
+    setWinner(player);
+    setGameState(GAME_STATE.WIN);
+    winControls.play();
+  }, []);
 
   const doPlay = useCallback(() => {
     setGameState(GAME_STATE.PLAY);
@@ -112,14 +115,14 @@ const Wordle = forwardRef<WordleRef, WordleProps>(({words}, ref) => {
     }
 
     if (guess === word) {
-      setGameState(GAME_STATE.WIN);
-      setWinner(player);
+      doWin(player)
       return;
     }
 
+    guessControls.play();
     setGameBoard((board) => [...board, guess]);
 
-  }, [word, words, setGameBoard]);
+  }, [word, words, setGameBoard, doWin]);
 
   const resetBoard = useCallback(() => {
     setGameBoard([]);
@@ -165,6 +168,7 @@ const Wordle = forwardRef<WordleRef, WordleProps>(({words}, ref) => {
 
   useEffect(() => {
     doNewGame();
+    startControls.play();
   }, [doNewGame]);
 
   const onCommand: OnCommandHandler = useCallback((user, command, message, flags) => {
@@ -199,6 +203,9 @@ const Wordle = forwardRef<WordleRef, WordleProps>(({words}, ref) => {
           {(gameState === GAME_STATE.WIN) && (<Win word={word} winner={winner}/>)}
         </div>
       </div>
+      {winAudio}
+      {startAudio}
+      {guessAudio}
     </>
 
   )
