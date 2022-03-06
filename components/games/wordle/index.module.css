@@ -1,0 +1,78 @@
+.gameboard {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 2;
+    background-color: rgb(40 40 40 / 80%);
+}
+
+.gameboard__container {
+    margin-bottom: 140px;
+    padding: 20px;
+    background-color: white;
+    min-height: 500px;
+    min-width: 570px;
+    box-shadow: -10px -10px 0 0 var(--brand-primary-color),
+    10px 10px 0 0 var(--brand-secondary-color);
+}
+
+.gameboard__title {
+    text-align: center;
+    font-family: var(--brand-font-family);
+    font-size: 50px;
+    color: var(--brand-primary-color);
+    text-shadow: 4px 4px 0 var(--brand-secondary-color);
+}
+
+.gameboard__grid {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 10px;
+    height: 550px;
+    width: 100%;
+    overflow: auto;
+}
+
+.gameboard__grid::-webkit-scrollbar {
+    display: none; /* for Chrome, Safari, and Opera */
+}
+
+.gameboard__row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.gameboard__letter {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--brand-font-family);
+    font-size: 40px;
+    padding: 10px;
+    text-align: center;
+    border: 5px solid var(--brand-grey);
+    background-color: var(--brand-background-color);
+    color: var(--brand-background-color);
+}
+
+.gameboard__letter--entered {
+    color: var(--brand-grey);
+}
+
+.gameboard__letter--in-word {
+    background-color: var(--brand-sunflower);
+}
+
+.gameboard__letter--correct {
+    background-color: var(--brand-emerland);
+}
