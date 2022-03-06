@@ -1,11 +1,27 @@
 import classNames from 'classnames';
-import {useCallback, useEffect, useRef, useState} from 'react';
+import {forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState} from 'react';
 import styles from './index.module.css';
+import {OnChatHandler, OnCommandHandler} from 'comfy.js';
 
 enum GAME_STATE {
   LOAD,
   PLAY,
   WIN,
+}
+
+enum WORDLE_COMMANDS {
+  RESET = 'reset',
+  HINT = 'hint',
+  FORFEIT = 'forfeit',
+}
+
+export interface WordleProps {
+  words: Array<string>;
+}
+
+export interface WordleRef {
+  onCommand: OnCommandHandler;
+  onChat: OnChatHandler;
 }
 
 type Row = string
@@ -27,6 +43,12 @@ const Row = ({row, word}: { row: Row, word: string }) => (
     ))}
   </div>
 );
+
+const Win = ({word, winner}: { word: string, winner: string }) => (
+  <>
+    <Row row={word} word={word}/>
+  </>
+)
 
 
 const Play = ({gameboard, word}: { gameboard: Grid, word: string }) => {
@@ -56,15 +78,12 @@ const Play = ({gameboard, word}: { gameboard: Grid, word: string }) => {
   )
 }
 
-export interface WordleProps {
-  words: Array<string>;
-}
-
-const Wordle = ({words}: WordleProps) => {
+const Wordle = forwardRef<WordleRef, WordleProps>(({words}, ref) => {
 
   const [gameState, setGameState] = useState<GAME_STATE>(GAME_STATE.LOAD);
   const [gameBoard, setGameBoard] = useState<Grid>([]);
   const [word, setWord] = useState<string>('tropes');
+  const [winner, setWinner] = useState<string>('');
 
   const doLoading = useCallback(() => {
     setGameState(GAME_STATE.LOAD);
@@ -82,7 +101,7 @@ const Wordle = ({words}: WordleProps) => {
     setGameState(GAME_STATE.PLAY);
   }, []);
 
-  const doGuess = useCallback((guess: string) => {
+  const doGuess = useCallback((guess: string, player: string) => {
 
     if (guess.length !== word.length) {
       return;
@@ -94,6 +113,7 @@ const Wordle = ({words}: WordleProps) => {
 
     if (guess === word) {
       setGameState(GAME_STATE.WIN);
+      setWinner(player);
       return;
     }
 
@@ -117,55 +137,72 @@ const Wordle = ({words}: WordleProps) => {
     doPlay();
   }, [doLoading, resetBoard, selectWord, doPlay])
 
+  const doHint = useCallback(() => {
+
+    const getRandomWord = () => {
+      const random = Math.floor(Math.random() * words.length);
+      return words[random];
+    }
+
+    let hint = '';
+    let letters = new Set();
+
+    do {
+      letters = new Set();
+      hint = getRandomWord();
+
+      hint
+        .split('')
+        .filter(letter => word.includes(letter))
+        .forEach(letter => letters.add(letter));
+
+    } while (letters.size < 2 && hint !== word);
+
+    doGuess(hint, 'Hint');
+
+  }, [word, words, doGuess]);
+  const doForfeit = useCallback(() => doGuess(word, 'Forfeit'), [word, doGuess]);
+
   useEffect(() => {
     doNewGame();
   }, [doNewGame]);
 
-  useEffect(() => {
-    const listener = ({detail}: CustomEvent) => doGuess(detail);
-    document.addEventListener('guess', listener as (event: Event) => void);
-    return () => {
-      document.removeEventListener('guess', listener as (event: Event) => void);
+  const onCommand: OnCommandHandler = useCallback((user, command, message, flags) => {
+    switch (command) {
+      case WORDLE_COMMANDS.RESET:
+        flags.broadcaster && doNewGame();
+        break;
+      case WORDLE_COMMANDS.HINT:
+        flags.broadcaster && doHint();
+        break;
+      case WORDLE_COMMANDS.FORFEIT:
+        flags.broadcaster && doForfeit();
+        break;
     }
+  }, [doNewGame, doHint, doForfeit])
+
+  const onChat: OnChatHandler = useCallback((user, message) => {
+    doGuess(message, user);
   }, [doGuess])
 
-  const doRandomGuess = useCallback(() => {
-    const random = Math.floor(Math.random() * words.length);
-    doGuess(words[random]);
-  }, [words, doGuess]);
-
-  const doAutoPlay = useCallback((index = 0) => {
-
-    const guess = words[index];
-    if (index === 50) {
-      // This makes sure autoplay doesnt run for too long
-      doGuess(word);
-      return;
-    }
-
-    if (index < words.length - 1 && gameState === GAME_STATE.PLAY) {
-      doGuess(guess);
-      setTimeout(() => doAutoPlay(index + 1), 50)
-    }
-  }, [word, words, doGuess, gameState]);
+  useImperativeHandle(ref, () => ({
+    onCommand,
+    onChat,
+  }));
 
   return (
     <>
       <div className={styles['gameboard']}>
         <div className={styles['gameboard__container']}>
           <h1 className={styles['gameboard__title']}>Not Wordle</h1>
-          <h1 className={styles['gameboard__title']}>{word}</h1>
-
-          <button onClick={() => doAutoPlay(0)}>Autoplay</button>
-          {(gameState === GAME_STATE.PLAY) && (
-            <Play word={word} gameboard={gameBoard}/>
-          )}
+          {(gameState === GAME_STATE.PLAY) && (<Play word={word} gameboard={gameBoard}/>)}
+          {(gameState === GAME_STATE.WIN) && (<Win word={word} winner={winner}/>)}
         </div>
       </div>
     </>
 
   )
-
-}
+})
+Wordle.displayName = 'Wordle'
 
 export default Wordle;

@@ -12,11 +12,21 @@
     background-color: rgb(40 40 40 / 80%);
 }
 
+@keyframes pop-in {
+    0% { opacity: 0; transform: scale(0.5); }
+    80% { transform: scale(1.2); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+
 .gameboard__container {
+    animation-name: pop-in;
+    animation-duration: 300ms;
+    animation-fill-mode: forwards;
+
     margin-bottom: 140px;
-    padding: 20px;
+    padding: 40px;
     background-color: white;
-    min-height: 500px;
     min-width: 570px;
     box-shadow: -10px -10px 0 0 var(--brand-primary-color),
     10px 10px 0 0 var(--brand-secondary-color);
@@ -28,14 +38,14 @@
     font-size: 50px;
     color: var(--brand-primary-color);
     text-shadow: 4px 4px 0 var(--brand-secondary-color);
+    margin-bottom: 20px;
 }
 
 .gameboard__grid {
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
     gap: 10px;
-    height: 550px;
+    max-height: 550px;
     width: 100%;
     overflow: auto;
 }
@@ -60,13 +70,13 @@
     font-size: 40px;
     padding: 10px;
     text-align: center;
-    border: 5px solid var(--brand-grey);
+    border: 4px dashed var(--brand-grey);
     background-color: var(--brand-background-color);
-    color: var(--brand-background-color);
+    text-transform: uppercase;
 }
 
 .gameboard__letter--entered {
-    color: var(--brand-grey);
+    color: var(--brand-black);
 }
 
 .gameboard__letter--in-word {
