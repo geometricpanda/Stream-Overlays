@@ -86,3 +86,13 @@
 .gameboard__letter--correct {
     background-color: var(--brand-emerland);
 }
+
+.gameboard__winner {
+    text-align: center;
+    font-family: var(--brand-font-family);
+    font-weight: bold;
+    font-size: 70px;
+    color: var(--brand-primary-color);
+    text-shadow: 4px 4px 0 var(--brand-secondary-color);
+    margin-top: 20px;
+}

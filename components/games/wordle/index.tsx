@@ -48,6 +48,7 @@ const Row = ({row, word}: { row: Row, word: string }) => (
 const Win = ({word, winner}: { word: string, winner: string }) => (
   <>
     <Row row={word} word={word}/>
+    <div className={styles['gameboard__winner']}>Winner: {winner}</div>
   </>
 )
 
@@ -138,6 +139,7 @@ const Wordle = forwardRef<WordleRef, WordleProps>(({words}, ref) => {
     resetBoard();
     selectWord();
     doPlay();
+    startControls.play();
   }, [doLoading, resetBoard, selectWord, doPlay])
 
   const doHint = useCallback(() => {
@@ -168,7 +170,6 @@ const Wordle = forwardRef<WordleRef, WordleProps>(({words}, ref) => {
 
   useEffect(() => {
     doNewGame();
-    startControls.play();
   }, [doNewGame]);
 
   const onCommand: OnCommandHandler = useCallback((user, command, message, flags) => {
