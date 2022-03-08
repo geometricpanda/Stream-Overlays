@@ -9,7 +9,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   const length = +req.query.length || 5;
 
   try {
-    const wordlist = await readFile(path.join(dir, 'wordle', 'wordlist-long.txt'), 'utf-8');
+    const wordlist = await readFile(path.join(dir, 'wordle', 'wordlist-simple.txt'), 'utf-8');
     const words = wordlist
       .split('\n')
       .filter(word => word.length === length)

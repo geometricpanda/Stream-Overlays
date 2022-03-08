@@ -44,7 +44,7 @@ const Overlays: FC<OverlaysProps> = ({channel}) => {
   const twitch = `twitch.tv/${channel.broadcaster_login}`;
   const github = 'github.com/geometricpanda';
 
-  const {data, error} = useSWR('/api/words?length=6', fetcher)
+  const {data, error} = useSWR('/api/words?length=5', fetcher)
 
   const [showWordle, setShowWordle] = useState(false);
   const wordleRef = useRef<WordleRef>(null);

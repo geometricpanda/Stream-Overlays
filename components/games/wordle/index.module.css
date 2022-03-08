@@ -5,17 +5,25 @@
     right: 0;
     bottom: 0;
     display: flex;
-    justify-content: center;
     align-items: center;
     flex-direction: column;
     z-index: 2;
-    background-color: rgb(40 40 40 / 80%);
+    background-color: rgb(40 40 40 / 50%);
+    padding-top: 80px;
 }
 
 @keyframes pop-in {
-    0% { opacity: 0; transform: scale(0.5); }
-    80% { transform: scale(1.2); }
-    100% { opacity: 1; transform: scale(1); }
+    0% {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    80% {
+        transform: scale(1.2);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 
@@ -25,9 +33,9 @@
     animation-fill-mode: forwards;
 
     margin-bottom: 140px;
-    padding: 40px;
+    padding: 30px;
     background-color: white;
-    min-width: 570px;
+    min-width: 600px;
     box-shadow: -10px -10px 0 0 var(--brand-primary-color),
     10px 10px 0 0 var(--brand-secondary-color);
 }
@@ -95,4 +103,105 @@
     color: var(--brand-primary-color);
     text-shadow: 4px 4px 0 var(--brand-secondary-color);
     margin-top: 20px;
+}
+
+.leaderboard {
+    position: absolute;
+    left: 50px;
+    top: 80px;
+    z-index: 2;
+    width: 400px;
+    min-height: 190px;
+
+    animation-name: pop-in;
+    animation-duration: 300ms;
+    animation-fill-mode: forwards;
+
+    padding: 30px;
+    background-color: white;
+    box-shadow: -10px -10px 0 0 var(--brand-primary-color),
+    10px 10px 0 0 var(--brand-secondary-color);
+}
+
+.leaderboard__table table {
+    width: 100%;
+    border-spacing: 0;
+}
+
+.leaderboard__table thead tr {
+    background-color: var(--brand-primary-color);
+    border: 0;
+    padding: 0;
+}
+
+.leaderboard__table thead td {
+    border-bottom: 10px solid var(--brand-background-color);
+    margin: 0;
+    padding: 8px 16px;
+    font-size: 20px;
+    font-family: var(--brand-font-family);
+    font-weight: bold;
+    color: var(--brand-background-color);
+}
+
+.leaderboard__table td:first-child {
+    text-align: left;
+}
+
+.leaderboard__table td {
+    text-align: center;
+}
+
+.leaderboard__table tbody td {
+    padding: 4px 16px;
+    font-size: 20px;
+    font-family: var(--brand-font-family);
+    font-weight: bold;
+    color: var(--brand-secondary-color);
+}
+
+.lettergrid {
+    position: absolute;
+    right: 50px;
+    top: 80px;
+    z-index: 2;
+    width: 348px;
+
+    animation-name: pop-in;
+    animation-duration: 300ms;
+    animation-fill-mode: forwards;
+
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+
+    padding: 30px;
+    background-color: white;
+    box-shadow: -10px -10px 0 0 var(--brand-primary-color),
+    10px 10px 0 0 var(--brand-secondary-color);
+}
+
+.lettergrid__letter {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-transform: uppercase;
+    width: 60px;
+    height: 60px;
+    background-color: var(--brand-secondary-color);
+    font-size: 50px;
+    font-family: var(--brand-font-family);
+    font-weight: bold;
+    color: var(--brand-background-color);
+}
+
+.lettergrid__letter--used {
+    opacity: 0.2;
+}
+
+.lettergrid__letter--valid {
+    opacity: 1;
+    background-color: var(--brand-emerland);
 }

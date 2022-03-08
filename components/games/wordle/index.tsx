@@ -12,8 +12,9 @@ enum GAME_STATE {
 
 enum WORDLE_COMMANDS {
   RESET = 'reset',
+  NEW = 'new',
   HINT = 'hint',
-  FORFEIT = 'forfeit',
+  REVEAL = 'reveal',
 }
 
 export interface WordleProps {
@@ -80,12 +81,80 @@ const Play = ({gameboard, word}: { gameboard: Grid, word: string }) => {
   )
 }
 
+interface LettersProps {
+  letters: Array<string>;
+  all: Array<string>;
+  word: string;
+}
+
+const Letters = ({letters, all, word}: LettersProps) => (
+  <div className={styles['lettergrid']}>
+    {all.map(letter => (
+      <div
+        key={letter}
+        className={classNames({
+          [styles['lettergrid__letter']]: true,
+          [styles['lettergrid__letter--used']]: letters.includes(letter),
+          [styles['lettergrid__letter--valid']]: letters.includes(letter) && word.includes(letter),
+        })}>{letter}</div>
+    ))}
+  </div>
+)
+
+interface LeaderboardProps {
+  scores: Map<string, Scores>
+}
+
+interface Scores {
+  player: string;
+  attempts: number;
+  wins: number;
+}
+
+
+const Leaderboard = ({scores}: LeaderboardProps) => {
+
+  const leaderboard = Array.from(scores.values())
+    .sort((a: Scores, b: Scores) => {
+      return a.wins > b.wins
+        ? -1
+        : 1;
+    })
+    .slice(0, 12);
+
+
+  return (
+    <div className={styles['leaderboard']}>
+      <table className={styles['leaderboard__table']}>
+        <thead>
+        <tr>
+          <td width={300}>Player</td>
+          <td>Wins</td>
+        </tr>
+        </thead>
+        <tbody>
+        {leaderboard.map(score => (
+          <tr key={score.player}>
+            <td>{score.player}</td>
+            <td>{score.wins}</td>
+          </tr>
+        ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+const AZ = [...Array(26)].map((a, index) => String.fromCharCode(97 + index));
+
 const Wordle = forwardRef<WordleRef, WordleProps>(({words}, ref) => {
 
   const [winAudio, _, winControls] = useAudio({src: '/wordle/win.mp3', autoPlay: false});
   const [startAudio, __, startControls] = useAudio({src: '/wordle/start.mp3', autoPlay: false});
   const [guessAudio, ___, guessControls] = useAudio({src: '/wordle/guess.mp3', autoPlay: false});
 
+  const [letters, setLetters] = useState<Array<string>>([]);
+  const [scores, setScores] = useState<Map<string, Scores>>(new Map());
   const [gameState, setGameState] = useState<GAME_STATE>(GAME_STATE.LOAD);
   const [gameBoard, setGameBoard] = useState<Grid>([]);
   const [word, setWord] = useState<string>('tropes');
@@ -93,19 +162,36 @@ const Wordle = forwardRef<WordleRef, WordleProps>(({words}, ref) => {
 
   const doLoading = useCallback(() => {
     setGameState(GAME_STATE.LOAD);
-  }, []);
+  }, [setGameState]);
 
   const doWin = useCallback((player) => {
     setWinner(player);
     setGameState(GAME_STATE.WIN);
     winControls.play();
-  }, []);
+  }, [setWinner, setGameState]);
 
   const doPlay = useCallback(() => {
     setGameState(GAME_STATE.PLAY);
-  }, []);
+  }, [setGameState]);
 
-  const doGuess = useCallback((guess: string, player: string) => {
+  const addScore = useCallback((player, win) => {
+
+    const newRecord = {
+      player,
+      wins: 0,
+      attempts: 0,
+    }
+
+    const record = scores.get(player) || newRecord
+
+    record.wins = win ? record.wins + 1 : record.wins;
+    record.attempts = record.attempts + 1;
+    scores.set(player, record);
+    setScores(scores);
+
+  }, [scores, setScores])
+
+  const doGuess = useCallback((guess: string, player: string | null) => {
 
     if (guess.length !== word.length) {
       return;
@@ -115,19 +201,24 @@ const Wordle = forwardRef<WordleRef, WordleProps>(({words}, ref) => {
       return;
     }
 
-    if (guess === word) {
+    guess = guess.toLowerCase();
+    setLetters(letters => [...letters, ...guess.split('')]);
+
+    if (guess === word && player) {
+      addScore(player, true);
       doWin(player)
       return;
     }
 
-    guessControls.play();
     setGameBoard((board) => [...board, guess]);
+    guessControls.play();
 
-  }, [word, words, setGameBoard, doWin]);
+  }, [addScore, word, words, setGameBoard, doWin, setLetters]);
 
   const resetBoard = useCallback(() => {
     setGameBoard([]);
   }, []);
+
 
   const selectWord = useCallback(() => {
     const random = Math.floor(Math.random() * words.length);
@@ -140,7 +231,13 @@ const Wordle = forwardRef<WordleRef, WordleProps>(({words}, ref) => {
     selectWord();
     doPlay();
     startControls.play();
-  }, [doLoading, resetBoard, selectWord, doPlay])
+    setLetters([]);
+  }, [doLoading, resetBoard, selectWord, doPlay, setLetters])
+
+  const doReset = useCallback(() => {
+    setScores(new Map())
+    doNewGame()
+  }, [setScores, doNewGame]);
 
   const doHint = useCallback(() => {
 
@@ -163,10 +260,10 @@ const Wordle = forwardRef<WordleRef, WordleProps>(({words}, ref) => {
 
     } while (letters.size < 2 && hint !== word);
 
-    doGuess(hint, 'Hint');
+    doGuess(hint, null);
 
   }, [word, words, doGuess]);
-  const doForfeit = useCallback(() => doGuess(word, 'Forfeit'), [word, doGuess]);
+  const doForfeit = useCallback(() => doGuess(word, null), [word, doGuess]);
 
   useEffect(() => {
     doNewGame();
@@ -175,12 +272,15 @@ const Wordle = forwardRef<WordleRef, WordleProps>(({words}, ref) => {
   const onCommand: OnCommandHandler = useCallback((user, command, message, flags) => {
     switch (command) {
       case WORDLE_COMMANDS.RESET:
+        flags.broadcaster && doReset();
+        break;
+      case WORDLE_COMMANDS.NEW:
         flags.broadcaster && doNewGame();
         break;
       case WORDLE_COMMANDS.HINT:
         flags.broadcaster && doHint();
         break;
-      case WORDLE_COMMANDS.FORFEIT:
+      case WORDLE_COMMANDS.REVEAL:
         flags.broadcaster && doForfeit();
         break;
     }
@@ -204,6 +304,8 @@ const Wordle = forwardRef<WordleRef, WordleProps>(({words}, ref) => {
           {(gameState === GAME_STATE.WIN) && (<Win word={word} winner={winner}/>)}
         </div>
       </div>
+      <Leaderboard scores={scores}/>
+      <Letters all={AZ} letters={letters} word={word}/>
       {winAudio}
       {startAudio}
       {guessAudio}
